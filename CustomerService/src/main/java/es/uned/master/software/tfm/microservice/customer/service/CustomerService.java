@@ -12,7 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 import es.uned.master.software.tfm.microservice.customer.amqp.Producer;
 import es.uned.master.software.tfm.microservice.customer.jpa.entity.Customer;
 import es.uned.master.software.tfm.microservice.customer.jpa.entity.Order;
+import es.uned.master.software.tfm.microservice.customer.jpa.entity.ReservedCredit;
+import es.uned.master.software.tfm.microservice.customer.jpa.entity.ReservedCreditId;
 import es.uned.master.software.tfm.microservice.customer.jpa.repository.CustomerRepository;
+import es.uned.master.software.tfm.microservice.customer.jpa.repository.ReservedCreditRepository;
 
 @Service
 @Transactional
@@ -22,6 +25,9 @@ public class CustomerService {
 	
 	@Autowired
 	private CustomerRepository customerRepository;
+	
+	@Autowired
+	private ReservedCreditRepository reservedCreditRepository;
 	
 	@Value("${queue.customers.name}")
 	private String customersQueueName;
@@ -42,11 +48,16 @@ public class CustomerService {
 	
 	public void checkLimit(Order order){
 		Customer customer = customerRepository.findOne(order.getCustomerId());
-		if (customer.getCreditLimit()>=order.getTotal()){
+		if (customer != null && customer.getCreditLimit()>=order.getTotal()){
 			log.info("El limite de credito es superior a la cantidad solicitada por el pedido");
 			log.info("Se establece el pedido como abierto (OPEN)");
 			order.setStatus("OPEN");
-		} else {
+			ReservedCreditId reservedCreditId = new ReservedCreditId(order.getOrderId(), order.getCustomerId());
+			ReservedCredit reservedCredit = new ReservedCredit(reservedCreditId, order.getTotal());
+			log.info("Se reserva el credito {} para el pedido {} del cliente {}", reservedCredit.getTotalReserved(), 
+					reservedCredit.getReservedCreditId().getOrderId(), reservedCredit.getReservedCreditId().getCustomerId());
+			reservedCreditRepository.save(reservedCredit);
+		} else { // No existe el cliente o la cantidad del pedido supera el credito
 			log.info("El limite de credito es inferior a la cantidad solicitada por el pedido");
 			log.info("Se establece el pedido como rechazado (REJECTED)");
 			order.setStatus("REJECTED");
