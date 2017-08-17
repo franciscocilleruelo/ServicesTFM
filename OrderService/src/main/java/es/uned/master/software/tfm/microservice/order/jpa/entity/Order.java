@@ -25,9 +25,8 @@ public class Order implements Serializable {
 		super();
 	}
 
-	public Order(Long customerId, String status, int total) {
+	public Order(String status, int total) {
 		super();
-		this.customerId = customerId;
 		this.status = status;
 		this.total = total;
 	}

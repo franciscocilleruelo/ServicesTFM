@@ -29,8 +29,8 @@ public class OrderService {
 	private String ordersQueueName;
 	
 	public void insertExampleData(){
-		orderRepository.save(new Order(new Long(1), "OPEN", 25));
-		orderRepository.save(new Order(new Long(2), "OPEN", 250));
+		orderRepository.save(new Order("OPEN", 25));
+		orderRepository.save(new Order("OPEN", 250));
 		log.info("Inicializado repositorio de pedidos con datos de ejemplo");
 	}
 	
