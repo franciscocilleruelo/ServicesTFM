@@ -28,12 +28,6 @@ public class OrderService {
 	@Value("${queue.orders.name}")
 	private String ordersQueueName;
 	
-	public void insertExampleData(){
-		orderRepository.save(new Order("OPEN", 25));
-		orderRepository.save(new Order("OPEN", 250));
-		log.info("Inicializado repositorio de pedidos con datos de ejemplo");
-	}
-	
 	public List<Order> findAll(){
 		log.info("Busqueda de todos los pedidos");
 		return orderRepository.findAll();

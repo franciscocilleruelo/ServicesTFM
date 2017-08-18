@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import es.uned.master.software.tfm.microservice.customer.amqp.Producer;
 import es.uned.master.software.tfm.microservice.customer.jpa.entity.Customer;
@@ -48,8 +49,13 @@ public class CustomerService {
 	
 	public void checkLimit(Order order){
 		Customer customer = customerRepository.findOne(order.getCustomerId());
-		if (customer != null && customer.getCreditLimit()>=order.getTotal()){
-			log.info("El limite de credito es superior a la cantidad solicitada por el pedido");
+		int reservedCreditNow = 0;
+		String reservedCreditNowS = reservedCreditRepository.sumReserverCreditByCustomerId(order.getCustomerId());
+		if (StringUtils.hasText(reservedCreditNowS)){
+			reservedCreditNow = Integer.valueOf(reservedCreditNowS);
+		}
+		if (customer != null && customer.getCreditLimit() >= order.getTotal() + reservedCreditNow){
+			log.info("El limite de credito es superior a la suma de la cantidad solicitada para el pedido mas el credito reservado para otros pedidos");
 			log.info("Se establece el pedido como abierto (OPEN)");
 			order.setStatus("OPEN");
 			ReservedCreditId reservedCreditId = new ReservedCreditId(order.getOrderId(), order.getCustomerId());
