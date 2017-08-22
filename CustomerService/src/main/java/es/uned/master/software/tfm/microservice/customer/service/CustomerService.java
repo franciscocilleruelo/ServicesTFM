@@ -48,14 +48,17 @@ public class CustomerService {
 	}
 	
 	public void checkLimit(Order order){
+		log.info("Recuperamos el cliente {} asociado al pedido", order.getCustomerId());
 		Customer customer = customerRepository.findOne(order.getCustomerId());
 		int reservedCreditNow = 0;
 		String reservedCreditNowS = reservedCreditRepository.sumReserverCreditByCustomerId(order.getCustomerId());
 		if (StringUtils.hasText(reservedCreditNowS)){
 			reservedCreditNow = Integer.valueOf(reservedCreditNowS);
 		}
+		log.info("El credito reservado del cliente {} para otros pedidos es de {}", order.getCustomerId(), reservedCreditNow);
 		if (customer != null && customer.getCreditLimit() >= order.getTotal() + reservedCreditNow){
-			log.info("El limite de credito es superior a la suma de la cantidad solicitada para el pedido mas el credito reservado para otros pedidos");
+			log.info("El limite de credito para el cliente {} es superior a la suma de la cantidad solicitada para el pedido ({}) mas el credito reservado para otros pedidos ({})"
+					, order.getCustomerId(), order.getOrderId(), reservedCreditNow);
 			log.info("Se establece el pedido como abierto (OPEN)");
 			order.setStatus("OPEN");
 			ReservedCreditId reservedCreditId = new ReservedCreditId(order.getOrderId(), order.getCustomerId());
